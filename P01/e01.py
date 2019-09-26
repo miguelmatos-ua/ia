@@ -91,12 +91,13 @@ def ex9(lst1, lst2):
     return new_lst
 
 
-# TODO: 10.  Dado  um  conjunto,  na  forma  de  uma  lista,  retorna  uma  lista  de  listas  que  representa  o
+# 10.  Dado  um  conjunto,  na  forma  de  uma  lista,  retorna  uma  lista  de  listas  que  representa  o
 #  conjunto de todos os subconjuntos do conjunto dado.
 def ex10(conj):
     if not conj:
-        return []
-    return 0
+        return [[]]
+    sub = ex10(conj[1:])
+    return sub + [[conj[1:]] + y for y in sub]
 
 
 print(ex1(a))
@@ -108,3 +109,4 @@ print(ex6(c))
 print(ex7(d))
 print(ex8(a, 3, 13))
 print(ex9(a, e))
+print(ex10(b))
