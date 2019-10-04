@@ -60,12 +60,13 @@ class SearchProblem:
 
 # Nos de uma arvore de pesquisa
 class SearchNode:
-    def __init__(self, state, parent):
+    def __init__(self, state, parent, depth=0):  # 2.2 Add depth field
         self.state = state
         self.parent = parent
+        self.depth = depth
 
     def __str__(self):
-        return "no(" + str(self.state) + "," + str(self.parent) + ")"
+        return "no(" + str(self.state) + "," + str(self.parent) + "," + str(self.depth) + ")"
 
     def __repr__(self):
         return str(self)
@@ -77,9 +78,13 @@ class SearchTree:
     # construtor
     def __init__(self, problem, strategy='breadth'):
         self.problem = problem
-        root = SearchNode(problem.initial, None)
+        root = SearchNode(problem.initial, None, 0)
         self.open_nodes = [root]
         self.strategy = strategy
+        self.length = 0
+        self.terminal = 0
+        self.non_terminal = 1
+        self.ramification = 0
 
     # obter o caminho (sequencia de estados) da raiz ate um no
     def get_path(self, node):
@@ -90,15 +95,27 @@ class SearchTree:
         return path
 
     # procurar a solucao
-    def search(self):
+    def search(self, limit):
         while self.open_nodes:
             node = self.open_nodes.pop(0)
             if self.problem.goal_test(node.state):
-                return self.get_path(node)
+                self.ramification = (self.terminal + self.non_terminal + 1) / self.non_terminal
+                return str(self.get_path(node)) + "\nDepth: " + str(node.depth) + "\nLength: " + str(self.length) + \
+                    "\nTerminal: " + str(self.terminal) + "\nNon Terminal: " + str(self.non_terminal) + \
+                    "\nRatio: " + str(self.ramification) + "\n" + str(node)
             lnewnodes = []
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
-                lnewnodes += [SearchNode(newstate, node)]
+                # 2.1
+                if newstate not in self.get_path(node) and node.depth < limit:  # 2.4
+                    lnewnodes += [SearchNode(newstate, node, node.depth + 1)]
+                    self.length += 1
+                # 2.5
+                self.non_terminal += len(lnewnodes)
+                if not lnewnodes:
+                    self.terminal += 1
+                    self.non_terminal -= 1
+
             self.add_to_open(lnewnodes)
         return None
 
