@@ -64,9 +64,10 @@ class SearchNode:
         self.state = state
         self.parent = parent
         self.depth = depth
+        self.cost = 0
 
     def __str__(self):
-        return "no(" + str(self.state) + "," + str(self.parent) + "," + str(self.depth) + ")"
+        return "no(" + str(self.state) + "," + str(self.parent) + "," + str(self.depth) + "," + str(self.cost) + ")"
 
     def __repr__(self):
         return str(self)
@@ -85,6 +86,7 @@ class SearchTree:
         self.terminal = 0
         self.non_terminal = 1
         self.ramification = 0
+        self.total_cost = 0
 
     # obter o caminho (sequencia de estados) da raiz ate um no
     def get_path(self, node):
@@ -95,20 +97,30 @@ class SearchTree:
         return path
 
     # procurar a solucao
-    def search(self, limit):
+    def search(self, limit=None):
         while self.open_nodes:
             node = self.open_nodes.pop(0)
             if self.problem.goal_test(node.state):
+                # 2.6
                 self.ramification = (self.terminal + self.non_terminal + 1) / self.non_terminal
-                return str(self.get_path(node)) + "\nDepth: " + str(node.depth) + "\nLength: " + str(self.length) + \
-                    "\nTerminal: " + str(self.terminal) + "\nNon Terminal: " + str(self.non_terminal) + \
-                    "\nRatio: " + str(self.ramification) + "\n" + str(node)
+                return str(self.get_path(node)) + \
+                       "\nDepth: " + str(node.depth) + "\nLength: " + str(self.length) + \
+                       "\nTerminal: " + str(self.terminal) + "\nNon Terminal: " + str(self.non_terminal) + \
+                       "\nRatio: " + str(self.ramification) + \
+                       "\nTotal Cost: " + str(self.get_total_cost(node)) + "\n" + str(node)
+
+            if self.strategy == "depth" and limit is not None and node.depth >= limit:  # 2.4
+                continue
+
             lnewnodes = []
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
                 # 2.1
-                if newstate not in self.get_path(node) and node.depth < limit:  # 2.4
-                    lnewnodes += [SearchNode(newstate, node, node.depth + 1)]
+                if newstate not in self.get_path(node):
+                    newnode = SearchNode(newstate, node, node.depth + 1)
+                    # 2.8
+                    newnode.cost = self.problem.domain.cost(newstate, a)
+                    lnewnodes += [newnode]
                     self.length += 1
                 # 2.5
                 self.non_terminal += len(lnewnodes)
@@ -126,4 +138,10 @@ class SearchTree:
         elif self.strategy == 'depth':
             self.open_nodes[:0] = lnewnodes
         elif self.strategy == 'uniform':
-            pass
+            self.open_nodes = sorted(self.open_nodes + lnewnodes, key=lambda node: node.cost) # 2.10
+
+    # 2.9
+    def get_total_cost(self, node):
+        if not node:
+            return 0
+        return node.cost + self.get_total_cost(node.parent)

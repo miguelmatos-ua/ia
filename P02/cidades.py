@@ -13,15 +13,16 @@ from tree_search import *
 
 class Cidades(SearchDomain):
     def __init__(self, connections, coordinates):
+        super().__init__()
         self.connections = connections
         self.coordinates = coordinates
 
     def actions(self, cidade):
         actlist = []
         for (C1, C2, D) in self.connections:
-            if (C1 == cidade):
+            if C1 == cidade:
                 actlist += [(C1, C2)]
-            elif (C2 == cidade):
+            elif C2 == cidade:
                 actlist += [(C2, C1)]
         return actlist
 
@@ -30,8 +31,11 @@ class Cidades(SearchDomain):
         if C1 == cidade:
             return C2
 
-    def cost(self, state, action):
-        pass
+    def cost(self, state, action): # 2.7
+        (C1, C2) = action
+        for (a, b, c) in self.connections:
+            if (a == C1 and b == C2) or (a == C2 and b == C1):
+                return c
 
     def heuristic(self, state, goal_state):
         pass
@@ -100,16 +104,13 @@ cidades_portugal = Cidades(
      'Portalegre': (130, 170)}
 )
 
-p = SearchProblem(cidades_portugal, 'Braga', 'Faro')
-t = SearchTree(p, 'depth')
-
 
 # Atalho para obter caminho de c1 para c2 usando strategy:
 def search_path(c1, c2, strategy):
     my_prob = SearchProblem(cidades_portugal, c1, c2)
     my_tree = SearchTree(my_prob)
     my_tree.strategy = strategy
-    return my_tree.search(10)
+    return my_tree.search()
 
 
-print(t.search(10))
+print(search_path('Braga', 'Faro', 'uniform'))
