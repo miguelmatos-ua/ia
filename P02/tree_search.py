@@ -65,9 +65,11 @@ class SearchNode:
         self.parent = parent
         self.depth = depth
         self.cost = 0
+        self.heuristic = 0  # 2.11
 
     def __str__(self):
-        return "no(" + str(self.state) + "," + str(self.parent) + "," + str(self.depth) + "," + str(self.cost) + ")"
+        return "no(" + str(self.state) + "," + str(self.parent) + "," + str(self.depth) + "," + str(
+            self.cost) + "," + str(self.heuristic) + ")"
 
     def __repr__(self):
         return str(self)
@@ -87,6 +89,7 @@ class SearchTree:
         self.non_terminal = 1
         self.ramification = 0
         self.total_cost = 0
+        self.higher_cost = []
 
     # obter o caminho (sequencia de estados) da raiz ate um no
     def get_path(self, node):
@@ -107,7 +110,8 @@ class SearchTree:
                        "\nDepth: " + str(node.depth) + "\nLength: " + str(self.length) + \
                        "\nTerminal: " + str(self.terminal) + "\nNon Terminal: " + str(self.non_terminal) + \
                        "\nRatio: " + str(self.ramification) + \
-                       "\nTotal Cost: " + str(self.get_total_cost(node)) + "\n" + str(node)
+                       "\nTotal Cost: " + str(self.get_total_cost(node)) + \
+                       "\n" + str(node)
 
             if self.strategy == "depth" and limit is not None and node.depth >= limit:  # 2.4
                 continue
@@ -115,11 +119,14 @@ class SearchTree:
             lnewnodes = []
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
+
                 # 2.1
                 if newstate not in self.get_path(node):
                     newnode = SearchNode(newstate, node, node.depth + 1)
                     # 2.8
                     newnode.cost = self.problem.domain.cost(newstate, a)
+                    # 2.12
+                    newnode.heuristic = self.problem.domain.heuristic(newstate, self.problem.goal)
                     lnewnodes += [newnode]
                     self.length += 1
                 # 2.5
@@ -138,7 +145,11 @@ class SearchTree:
         elif self.strategy == 'depth':
             self.open_nodes[:0] = lnewnodes
         elif self.strategy == 'uniform':
-            self.open_nodes = sorted(self.open_nodes + lnewnodes, key=lambda node: node.cost) # 2.10
+            self.open_nodes = sorted(self.open_nodes + lnewnodes, key=lambda node: node.cost)  # 2.10
+        elif self.strategy == 'greedy':
+            self.open_nodes[:0] = sorted(lnewnodes, key=lambda node: node.heuristic)  # 2.13
+        elif self.strategy == 'A*':
+            self.open_nodes[:0] = sorted(lnewnodes, key=lambda node: node.heuristic + node.cost)  # 2.14
 
     # 2.9
     def get_total_cost(self, node):

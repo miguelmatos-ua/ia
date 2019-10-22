@@ -6,7 +6,7 @@
 #
 # (c) Luis Seabra Lopes, Introducao a Inteligencia Artificial, 2012/2013
 #
-
+import math
 
 from tree_search import *
 
@@ -31,14 +31,16 @@ class Cidades(SearchDomain):
         if C1 == cidade:
             return C2
 
-    def cost(self, state, action): # 2.7
+    def cost(self, state, action):  # 2.7
         (C1, C2) = action
         for (a, b, c) in self.connections:
             if (a == C1 and b == C2) or (a == C2 and b == C1):
                 return c
 
-    def heuristic(self, state, goal_state):
-        pass
+    def heuristic(self, state, goal_state):  # 2.12
+        x1, y1 = self.coordinates[state][0], self.coordinates[state][1]
+        x2, y2 = self.coordinates[goal_state][0], self.coordinates[goal_state][1]
+        return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
 
 cidades_portugal = Cidades(
@@ -113,4 +115,8 @@ def search_path(c1, c2, strategy):
     return my_tree.search()
 
 
+print(search_path('Braga', 'Faro', 'breadth'))
+print(search_path('Braga', 'Faro', 'depth'))
 print(search_path('Braga', 'Faro', 'uniform'))
+print(search_path('Braga', 'Faro', 'greedy'))
+print(search_path('Braga', 'Faro', 'A*'))
