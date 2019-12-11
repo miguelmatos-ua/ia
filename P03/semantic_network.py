@@ -86,6 +86,7 @@ class SemanticNetwork:
         if ldecl is None:
             ldecl = []
         self.declarations = ldecl
+        self.query_result = []
 
     def __str__(self):
         return my_list2string(self.declarations)
@@ -102,6 +103,43 @@ class SemanticNetwork:
              and (e2 is None or d.relation.entity2 == e2)]
         return self.query_result
 
+    def query(self, entity, relation=None):
+        parents = [self.query(d.relation.entity2, relation) for d in self.declarations
+                   if d.relation.entity1 == entity and not isinstance(d.relation, Association)]
+        self.query_result = [item for sublist in parents for item in sublist] + self.query_local(e1=entity,
+                                                                                                 rel=relation)
+        return self.query_result
+
+    def query2(self, entity, relation=None):
+        parents = [self.query2(d.relation.entity2, relation) for d in self.declarations
+                   if d.relation.entity1 == entity and not isinstance(d.relation, Association)]
+
+        self.query_result = [item for sublist in parents for item in sublist if
+                             isinstance(item.relation, Association)] + self.query_local(e1=entity, rel=relation)
+
+        return self.query_result
+
+    def query_cancel(self, entity, relation):
+        parents = [self.query_cancel(d.relation.entity2, relation) for d in self.declarations
+                   if d.relation.entity1 == entity and not isinstance(d.relation, Association)]
+
+        local_decl = self.query_local(e1=entity, rel=relation)
+
+        self.query_result = [item for sublist in parents for item in sublist if
+                             item.relation.name not in [d.relation.name for d in local_decl]] + local_decl
+        return self.query_result
+
+    def query_down(self, entity, relation):
+        children = [self.query_down(d.relation.entity1, relation) for d in self.declarations
+                    if d.relation.entity2 == entity and not isinstance(d.relation, Association)]
+
+        self.query_result = [item for sublist in children for item in sublist] + self.query_local(e1=entity,
+                                                                                                  rel=relation)
+        return self.query_result
+
+    # def query_local_assoc(self, entity, relation):
+    #     local = self.query_local(e1=entity, rel=relation)
+
     def show_query_result(self):
         for d in self.query_result:
             print(str(d))
@@ -116,14 +154,50 @@ class SemanticNetwork:
         return list(set([d.user for d in self.declarations]))
 
     def list_types(self):  # ex4
-        return list(set([d.relation.entity2 for d in self.declarations if isinstance(d.relation, Member)]))
+        return list(set([d.relation.entity2 for d in self.declarations if
+                         isinstance(d.relation, Member) or isinstance(d.relation, Subtype)] + [d.relation.entity1 for d
+                                                                                               in self.declarations if
+                                                                                               isinstance(d.relation,
+                                                                                                          Subtype)]))
 
-    # def list_associations_entity(self, entity):  # ex5
-    #     return list(set([d.relation.name for d in self.declarations if
-    #                      d.relation.entity1 == entity and isinstance(d.relation, Association)]))
-    #
-    # def list_relations(self, user):
-    #     return list(set([d.relation.name for d in self.declarations if d.user == user]))
+    def list_local_associations(self, entity):  # ex5
+        return list(set([d.relation.name for d in self.declarations if
+                         (d.relation.entity1 == entity or d.relation.entity2 == entity) and isinstance(d.relation,
+                                                                                                       Association)]))
+
+    def list_relations(self, user):
+        return list(set([d.relation.name for d in self.declarations if d.user == user]))
+
+    def associations(self, user):
+        return len(set([d.relation.name for d in self.declarations if
+                        d.user == user and isinstance(d.relation, Association)]))
+
+    def list_local_user(self, entity):
+        return list(set([(d.relation.name, d.user) for d in self.declarations if
+                         isinstance(d.relation, Association) and (
+                                 d.relation.entity1 == entity or d.relation.entity2 == entity)]))
+
+    def predecessor(self, pred, desc):
+        parents = [d.relation.entity2 for d in self.declarations if
+                   d.relation.entity1 == desc and not isinstance(d.relation, Association)]
+        for p in parents:
+            if p == pred:
+                return True
+            if self.predecessor(pred, p):
+                return True
+        return False
+
+    def predecessor_path(self, pred, desc):
+        parents = [d.relation.entity2 for d in self.declarations if
+                   d.relation.entity1 == desc and not isinstance(d.relation, Association)]
+
+        for p in parents:
+            if p == pred:
+                return [pred, desc]
+            path = self.predecessor_path(pred, p)
+            if path:
+                return path + [desc]
+        return None
 
 
 # Funcao auxiliar para converter para cadeias de caracteres
