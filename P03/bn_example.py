@@ -51,7 +51,17 @@ print("All false: {}\n".format(sof.jointProb(allfalse)))
 # ----- ex3 ---------
 
 print("2)\nNeeding help, True: {}".format(sof.individual_prob('nh', True)))
+print("Needing help, False: {}".format(sof.individual_prob('nh', False)))
 
-print("------------------------------------------------")
+print("\n------------------------------------------------\n")
 
-print(sof.conjuctions(['a', 'b']))
+conj1 = sof.conjuctions1(['a', 'b'])
+conj2 = sof.conjuctions2(['a', 'b'])
+
+print(conj1, "\n", conj2)
+
+print("\n------------------ III.10 ----------------------\n")
+
+
+
+

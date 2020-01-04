@@ -1,3 +1,6 @@
+from itertools import product
+
+
 class BayesNet:
 
     def __init__(self, ldep=None):  # Why not ldep={}? See footnote 1.
@@ -29,19 +32,24 @@ class BayesNet:
             ancestors += self.ancestors(v, False)
         return list(set(ancestors))
 
-    def conjuctions(self, listvars):
+    def conjuctions1(self, listvars):
         if len(listvars) == 1:
             return [[(listvars[0], True)], [(listvars[0], False)]]
         lst = []
-        for r in self.conjuctions(listvars[1:]):
+        for r in self.conjuctions1(listvars[1:]):
             lst.append(r + [(listvars[0], True)])
             lst.append(r + [(listvars[0], False)])
         return lst
 
+    def conjuctions2(self, listvars):
+        combinations = product([True, False], repeat=len(listvars))
+        return [list(zip(listvars, c)) for c in combinations]
+
     def individual_prob(self, var, val):
-        for (mothers, p) in self.dependencies[var].items():
-            if len(mothers) == 0:
-                return p if val else 1 - p
+        s = 0.0
+        for c in self.conjuctions2(self.ancestors(var)):
+            s += self.jointProb([(var, val)] + c)
+        return s
 
 # Footnote 1:
 # Default arguments are evaluated on function definition,

@@ -92,3 +92,7 @@ cs = ConstraintSearch(make_friends(friends), make_constraints_friends(friends))
 
 print(cs.search())
 
+###############################################################################
+# Guiao TP - III.10
+###############################################################################
+
